@@ -1,5 +1,5 @@
-# Fork https://npm.taobao.org/package/react-native-yunpeng-alipay
 ## 加入支付宝登录获取用户信息
+Fork https://npm.taobao.org/package/react-native-yunpeng-alipay
 
 # react-native-yunpeng-alipay
 
