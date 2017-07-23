@@ -44,6 +44,37 @@ RCT_REMAP_METHOD(pay, payInfo:(NSString *)payInfo resolver:(RCTPromiseResolveBlo
     }];
 }
 
+// 登录
+RCT_REMAP_METHOD(login, login:(NSString *)payInfo resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+{
+    NSArray *urls = [[NSBundle mainBundle] infoDictionary][@"CFBundleURLTypes"];
+    NSMutableString *appScheme = [NSMutableString string];
+    BOOL multiUrls = [urls count] > 1;
+    for (NSDictionary *url in urls) {
+        NSArray *schemes = url[@"CFBundleURLSchemes"];
+        if (!multiUrls ||
+            (multiUrls && [@"alipay" isEqualToString:url[@"CFBundleURLName"]])) {
+            [appScheme appendString:schemes[0]];
+            break;
+        }
+    }
+    
+    if ([appScheme isEqualToString:@""]) {
+        NSString *error = @"scheme cannot be empty";
+        reject(@"10000", error, [NSError errorWithDomain:error code:10000 userInfo:NULL]);
+        return;
+    }
+    
+    _resolve = resolve;
+    _reject = reject;
+    
+    [[AlipaySDK defaultService] auth_V2WithInfo:payInfo fromScheme:appScheme callback:^(NSDictionary *resultDic) {
+        NSLog(@"支付宝登录授权回调--Arthur----->: %@", resultDic);
+        [AlipayModule handleResult:resultDic];
+    }];
+
+}
+
 +(void) handleResult:(NSDictionary *)resultDic
 {
     NSString *status = resultDic[@"resultStatus"];
@@ -60,6 +91,11 @@ RCT_REMAP_METHOD(pay, payInfo:(NSString *)payInfo resolver:(RCTPromiseResolveBlo
     if ([url.host isEqualToString:@"safepay"]) {
         [[AlipaySDK defaultService] processOrderWithPaymentResult:url standbyCallback:^(NSDictionary *resultDic) {
             //【由于在跳转支付宝客户端支付的过程中，商户app在后台很可能被系统kill了，所以pay接口的callback就会失效，请商户对standbyCallback返回的回调结果进行处理,就是在这个方法里面处理跟callback一样的逻辑】
+            [self handleResult:resultDic];
+        }];
+        
+        [[AlipaySDK defaultService] processAuth_V2Result:url standbyCallback:^(NSDictionary *resultDic) {
+            NSLog(@"--------------------->%@", resultDic);
             [self handleResult:resultDic];
         }];
     }
