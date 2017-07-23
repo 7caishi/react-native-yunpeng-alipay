@@ -1,3 +1,6 @@
+# Fork https://npm.taobao.org/package/react-native-yunpeng-alipay
+## 加入支付宝登录获取用户信息
+
 # react-native-yunpeng-alipay
 
 React Native Module for alipay.com
