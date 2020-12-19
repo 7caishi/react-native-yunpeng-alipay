@@ -1,27 +1,21 @@
 package com.yunpeng.alipay;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
-import android.content.Context;
-
-import com.alipay.sdk.app.PayTask;
 import com.alipay.sdk.app.AuthTask;
-
+import com.alipay.sdk.app.PayTask;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.WritableNativeArray;
+import com.facebook.react.bridge.WritableNativeMap;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Map;
 /**
  * Created by m2mbob on 16/5/6.
  */
@@ -89,6 +83,8 @@ public class AlipayModule extends ReactContextBaseJavaModule{
 
     @ReactMethod
     public void pay(final String payInfo,final Promise promise) {
+        final WritableNativeArray arr =new WritableNativeArray();
+        final WritableNativeMap map = new WritableNativeMap();
         Runnable payRunnable = new Runnable() {
             @Override
             public void run() {
@@ -96,6 +92,7 @@ public class AlipayModule extends ReactContextBaseJavaModule{
                     PayTask alipay = new PayTask(getCurrentActivity());
                     String result = alipay.pay(payInfo, true);
                     PayResult payResult = new PayResult(result);
+
                     String resultInfo = payResult.getMemo();
                     String resultStatus = payResult.getResultStatus();
                     Message msg = new Message();
@@ -103,7 +100,9 @@ public class AlipayModule extends ReactContextBaseJavaModule{
                     msg.obj = resultStatus;
                     mHandler.sendMessage(msg);
                     if(Integer.valueOf(resultStatus) >= 8000){
-                        promise.resolve(result);
+                        map.putString("resultStatus",resultStatus);
+                        arr.pushMap(map);
+                        promise.resolve(arr);
                     }else{
                         promise.reject(resultInfo, new RuntimeException(resultStatus+":"+resultInfo));
                     }
